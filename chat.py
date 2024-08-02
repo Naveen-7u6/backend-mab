@@ -31,31 +31,43 @@ def general_answer(question):
     print(result)
     return result
 
-
-while True:
-    prompt = input("User: ")
-    print()
-    print(f"User:\n {prompt}")
-
-    if prompt.lower() == "exit":
-        break
-    else:
-        print(f"\nBot:\n")
-        if needs_rag(prompt):
-            print("RAG")
+def get_reponse(prompt):
+    import json
+    if needs_rag(prompt):
             response = rag_response(prompt)
-            print(response) # Print a new line for better spacing
-        elif needs_agent(prompt):
-            print("true")
-            response = agent_response(prompt)
-            print(response)
-        else:
-            memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-            response = general_answer(prompt)
-            print(response) # Print a new line for better spacing
+            return json.dumps({"response":response}) # Print a new line for better spacing
+    elif needs_agent(prompt):
+        response = agent_response(prompt)
+        return json.dumps({"response":response})
+    else:
+        memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+        response = general_answer(prompt)
+        return json.dumps({"response":response})
+
+# while True:
+#     prompt = input("User: ")
+#     print()
+#     print(f"User:\n {prompt}")
+
+#     if prompt.lower() == "exit":
+#         break
+#     else:
+#         print(f"\nBot:\n")
+#         if needs_rag(prompt):
+#             print("RAG")
+#             response = rag_response(prompt)
+#             print(response) # Print a new line for better spacing
+#         elif needs_agent(prompt):
+#             print("true")
+#             response = agent_response(prompt)
+#             print(response)
+#         else:
+#             memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+#             response = general_answer(prompt)
+#             print(response) # Print a new line for better spacing
     
-    import time
-    time.sleep(3)
+#     import time
+#     time.sleep(3)
 
 
 '''

@@ -1,15 +1,29 @@
 from typing import Union
-
+from pydantic import BaseModel
 from fastapi import FastAPI
+from thirdPartyApi import getFlightDetails
+from chat import get_reponse
 
 app = FastAPI()
 
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+class Message(BaseModel):
+    content: str
 
+@app.post("/chatbot/")
+def chat_response(message: Message):
+    response_content = generate_response(message.content)
+    response = {
+        "sender": "chatbot",
+        "content": response_content
+    }
+    return response
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+def generate_response(user_message: str) -> str:
+    return ""
+
+@app.post("/")
+def read_root(req : Message):
+    #res = get_reponse(req.content)
+    print(req.content)
+    return {"message": "HI"}

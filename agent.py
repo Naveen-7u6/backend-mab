@@ -14,6 +14,7 @@ import json
 import os
 import openai
 from dotenv import load_dotenv, find_dotenv
+from thirdPartyApi import getFlightDetails
 
 load_dotenv(find_dotenv())
 
@@ -46,6 +47,9 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
         "airline": "KLM",
         "flight": "KL643",
     }
+
+    res = getFlightDetails(flight_info)
+
     return json.dumps(flight_info)
 
 @tool
