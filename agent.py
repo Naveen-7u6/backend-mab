@@ -14,7 +14,6 @@ import json
 import os
 import openai
 from dotenv import load_dotenv, find_dotenv
-from thirdPartyApi import getFlightDetails
 
 load_dotenv(find_dotenv())
 
@@ -23,11 +22,18 @@ if api_key is None:
     print("OPENAI_API_KEY environment variable is not set.")
 else:
     openai.api_key  = os.environ['OPENAI_API_KEY']
-    print("API key is set.")
 
+
+backend_data = []
+package_data = []
+
+def read_json_objects_from_file(filename):
+    with open(filename, 'r') as file:
+        return json.load(file)
+    
 @tool
 def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
-    """Get flight information between two locations."""
+    """Get flight information between two locations. Required loc_origin airport code, loc_destination airport code"""
 
     missing_fields = []
     
@@ -40,17 +46,44 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
     if missing_fields:
         return f"Enter the correct details for flight info, missing {', '.join(missing_fields)}"
     
-    flight_info = {
-        "loc_origin": loc_origin,
-        "loc_destination": loc_destination,
-        "datetime": str(datetime.now() + timedelta(hours=2)),
-        "airline": "KLM",
-        "flight": "KL643",
-    }
+    flight_jsons = {"DPS":"flights.json","MLE":"maldives_flights.json","COK":"mysore_flights.json"}
 
-    res = getFlightDetails(flight_info)
+    file_path = f"./{flight_jsons[loc_destination]}"
+    print(file_path)
 
-    return json.dumps(flight_info)
+    flights_data = read_json_objects_from_file(file_path)
+
+    flight_data = dict()
+    i = 1
+    for data in flights_data[:4]:
+        flight_details = dict()
+        flight_details['Origin'] = data['Origin']
+        flight_details['Destination'] = data['Destination']
+        flight_details['TotalFare'] = data['Fare']['TotalFare']
+        flight_details['AgentPreferredCurrency'] = data['Fare']['AgentPreferredCurrency']
+
+        for s in data['Segments']:
+            flight_details['AirlineName'] = s[0]['AirlineName']
+            flight_details['FlightNumber'] = s[0]['FlightNumber']
+            flight_details['DepartureTime'] = s[0]['DepartureTime']
+            flight_details['ArrivalTime'] = s[0]['ArrivalTime']
+            flight_details["Availability"] = s[0]['NoOfSeatAvailable']
+        
+        key = f"flight_{i}"
+        flight_data[key] = (flight_details)
+        i+=1
+    
+    backend_data.append(flight_data)
+
+    return json.dumps(flight_data)
+
+@tool
+def packages_list(places) -> dict:
+    """Provide packages we offer from the places text given."""
+    file_path = f"./available_packages.json"
+    packages_data = read_json_objects_from_file(file_path)
+    package_data.append(packages_data)
+    return places
 
 @tool
 def book_flight(loc_origin, loc_destination=None, passenger_name=None):
@@ -84,6 +117,8 @@ def book_flight(loc_origin, loc_destination=None, passenger_name=None):
         "status": "Confirmed",
         "message": "Your flight has been booked successfully."
     }
+
+    print(booking_info)
     
     return json.dumps(booking_info)
 
@@ -101,7 +136,7 @@ memory = ConversationBufferMemory(memory_key="chat_history")
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are helpful flight booking assistant who can book and provide details about flight."),
     ("user", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad")
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
 
 llm_with_tool = llm.bind(functions = [format_tool_to_openai_function(t) for t in tools])
@@ -112,13 +147,18 @@ agent = (
         "agent_scratchpad": lambda x: format_to_openai_function_messages(
             x["intermediate_steps"]
         ),
-        "memory": memory.load_memory_variables, 
+        "chat_history": memory.load_memory_variables, 
     } | prompt | llm_with_tool | OpenAIFunctionsAgentOutputParser()
 )
 
 agent_executor = AgentExecutor(agent=agent, tools=tools)
 
 def agent_response(query):
-    print("Agent query")
+
     response = agent_executor.invoke({"input":query})
-    return response['output']
+    print(backend_data)
+    
+    if backend_data != []:
+        return (response, backend_data[-1])
+    else:
+        return (response['output'], None)

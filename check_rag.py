@@ -8,21 +8,10 @@ common_questions = [
     "Hello",
     "Thank you",
     "How are you?",
-    "What is your name?",
-    "Where are you from?",
-    "What time is it?",
-    "What is the date today?",
-    "What is the weather like today?",
-    "Can you tell me a joke?",
-    "Tell me a fun fact.",
-    "What is the capital of France?",
-    "How do you say 'hello' in Spanish?",
-    "What is your favorite color?",
-    "What is your favorite movie?",
-]
+    "What is your name?"]
 
 # Example keywords for RAG
-rag_keywords = ["tourist", "resorts", "stays", "holidays","vacations"]
+rag_keywords = ["places", "tourist", "resorts", "stays", "holidays","vacations"]
 
 # Keywords related to bookings
 booking_keywords = ["flight", "book", "booking", "reserve", "reservation", "ticket", "schedule", "availability"]

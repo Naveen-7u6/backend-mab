@@ -5,7 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 api_key = os.getenv('OPENAI_API_KEY')
-print(api_key)
+
 
 if api_key is None:
     print("OPENAI_API_KEY environment variable is not set.")
@@ -15,7 +15,15 @@ else:
 from langchain_community.document_loaders import TextLoader
 
 
-loader = TextLoader(r"D:\backend\backend-mab\docs\maldives.txt")
+import shutil
+
+def cleanup_chromadb(directory):
+    """Delete ChromaDB directory if it exists."""
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+
+
+loader = TextLoader("./docs/maldives.txt")
 document = loader.load()
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTextSplitter
@@ -30,8 +38,11 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 
 embedding = OpenAIEmbeddings()
-persist_directory = r'D:\backend\backend-mab\docs\chroma'
 
+persist_directory = './docs/chroma'
+cleanup_chromadb(persist_directory)
+
+print("Cleaned")
 
 vectordb = Chroma.from_documents(
     documents=split_doc,
@@ -58,9 +69,15 @@ from langchain.prompts import PromptTemplate
 
 template = """
 Use the following pieces of context to answer the question at the end. Refer to the provided context to answer the question.
-If the details about the place are not in the context, respond with "There are no details about this place. Check the package details." 
+The context contains the document about the tourist packages we offer. 
+
 {context}
 Question: {question}
+INSTRUCTIONS:
+
+Answer the users QUESTION using the CONTEXT text above.
+Keep your answer ground in the facts of the DOCUMENT.
+If the DOCUMENT doesn’t contain the facts to answer the QUESTION return "There are no details about this place. Check the package details for further details."
 Helpful Answer:"""
 
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"],template=template,)

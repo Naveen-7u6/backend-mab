@@ -239,7 +239,7 @@ Packages are discussed individually below:
         What makes Maldives a popular holiday destination?
         With 99% water and 1% land, the geographical structure of the country in itself is enthralling for tourists. The pristine shores offering serenity, balmy weather, crystal clear water, white sandy beaches with adventurous water activities, secluded time away from the chaos providing therapeutic spa and relaxing time make this South Asian country a popular dreamy destination for any beach lover!
 
-
+----------------------------------------------------------------------
 
 2.Bali
     An exotic tropical destination that flaunts scenic beaches and mountains, Bali is deep-rooted in culture and tradition, which adds to the charm of this scenic island.
@@ -354,7 +354,7 @@ Packages are discussed individually below:
         The beach is accessible 24 hours.
         Activities at the beach are available on a chargeable basis.
 
-    Resorts & Stays in Bali
+    Resorts and Stays in Bali
 
     1.Conrad Bali
         Overview
@@ -498,7 +498,7 @@ Packages are discussed individually below:
         How is the weather of Bali in peak season?
             The weather of Bali in peak season is pleasant temperatures throughout the day, with slight humidity. It means you can easily plan a trip in this season for maximum fun during this season.
 
-
+------------------------------------------------
 3.Coorg
     Unwind in the lap of nature in Coorg where aromatic coffee and spice plantations, lush green hills, cascading waterfalls and a distinct old-world charm sooth the senses.
     Discover the enchanting beauty of Coorg!
@@ -652,3 +652,5 @@ Packages are discussed individually below:
         The resort can arrange sightseeing tours and excursions on a chargeable basis.
         The resort has a swimming pool and fitness centre.
         The resort does not allow outside food and drinks.
+
+-------------------------------------------------------------

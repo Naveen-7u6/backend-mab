@@ -15,52 +15,51 @@ def getAuth():
 
     response = requests.post(url, json=payload, headers=headers)
 
-    print(response)
+    auth_token = response["TokenId"]
 
-    return response
+    return auth_token
 
 
-def getFlightDetails():
-    return "Welcome"
+def getFlightDetails(origin, destination):
 
     auth = getAuth()
 
     flightDetailsURL = "https://xmloutapi.tboair.com/API/V1/Search/Search"
 
-    # payload = {
-    #     {
-    #         "IPAddress": "192.168.11.92",
-    #          "TokenId":auth,
-    #         "EndUserBrowserAgent":"Mozilla/5.0(Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, likeGecko) Chrome/70.0.3538.110 Safari/537.36",
-    #         "PointOfSale":"ID",
-    #         "RequestOrigin":origin,
-    #         "UserData”: null,
-    #         "JourneyType": 1,
-    #          "AdultCount": 1,
-    #          "ChildCount": 0,
-    #          "InfantCount": 0,
-    #         "FlightCabinClass": 1,
-    #         "Segment":
-    #             [
-    #                 {
-    #                  "Origin": "",
-    #                  "Destination": "",
-    #                  "PreferredDepartureTime": "",
-    #                  "PreferredArrivalTime": "",
-    #                  "PreferredAirlines": []
-    #                 }
-    #         ]
-    # }
+    payload = {
+        {
+            "IPAddress": "192.168.11.92",
+            "TokenId":auth,
+            "EndUserBrowserAgent":"Mozilla/5.0(Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, likeGecko) Chrome/70.0.3538.110 Safari/537.36",
+            "PointOfSale":"ID",
+            "RequestOrigin":"India",
+            "UserData": None,
+            "JourneyType": 1,
+            "AdultCount": 1,
+            "ChildCount": 0,
+            "InfantCount": 0,
+            "FlightCabinClass": 1,
+            "Segment":
+                [
+                    {
+                     "Origin": origin,
+                     "Destination": destination,
+                     "PreferredDepartureTime": "",
+                     "PreferredArrivalTime": "",
+                     "PreferredAirlines": []
+                    }
+            ]
+    }
 
-    # }
+    }
     headers = {
         "Content-Type": "application/json"
     }
 
-    response = requests.post(url, json=payload, headers=headers)
+    response = requests.post(flightDetailsURL, json=payload, headers=headers)
 
     print(response)
 
 
-    return ""
+    return response
     
