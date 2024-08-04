@@ -53,7 +53,7 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
 
     flights_data = read_json_objects_from_file(file_path)
 
-    flight_data = dict()
+    flight_data = list()
     i = 1
     for data in flights_data[:4]:
         flight_details = dict()
@@ -70,7 +70,7 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
             flight_details["Availability"] = s[0]['NoOfSeatAvailable']
         
         key = f"flight_{i}"
-        flight_data[key] = (flight_details)
+        flight_data.append(flight_details)
         i+=1
     
     backend_data.append(flight_data)

@@ -40,7 +40,7 @@ def get_reponse(prompt):
         if backend_data is None:
             return {"response":response}
         else:
-            return {"response": backend_data}
+            return {"flightdetails": backend_data}
     else:
         memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
         response = general_answer(prompt)

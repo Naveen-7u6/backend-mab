@@ -8,3 +8,5 @@ pydantic
 uvicorn
 fastapi
 chromadb
+ngrok==1.3.0
+loguru==0.7.2
