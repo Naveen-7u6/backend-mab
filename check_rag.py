@@ -8,43 +8,19 @@ common_questions = [
     "Hello",
     "Thank you",
     "How are you?",
-    "What is your name?"]
-
-# Example keywords for RAG
-rag_keywords = ["places", "tourist", "resorts", "stays", "holidays","vacations"]
-
-# Keywords related to bookings
-booking_keywords = ["flight", "book", "booking", "reserve", "reservation", "ticket", "schedule", "availability"]
+    "What is your name?"
+]
 
 # Initialize a TF-IDF Vectorizer for similarity matching
 tfidf_vectorizer = TfidfVectorizer()
 tfidf_matrix = tfidf_vectorizer.fit_transform(common_questions)
 
-def needs_rag(query):
-    # Keyword matching for RAG
-    if any(keyword in query.lower() for keyword in rag_keywords):
-        return True
-
-    # # Similarity matching for common questions
-    # query_vec = tfidf_vectorizer.transform([query])  # Use the vectorizer object to transform the query
-    # similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
-    # if max(similarities) < 0.5:  # Threshold for non-common questions
-    #     return True
-
-    # If no conditions are met, assume RAG is not needed
-    return False
-
-def needs_agent(query):
-        # Check for booking-related keywords
-    if any(keyword in query.lower() for keyword in booking_keywords):
-        return True
-
-    # Similarity matching for common questions
-    # query_vec = tfidf_vectorizer.transform([query])  # Use the vectorizer object to transform the query
-    # similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
-    # if max(similarities) < 0.5:  # Threshold for non-common questions
-    #     return True
-
-    # If no conditions are met, assume RAG is not needed
-    return False
-
+def is_common_question(query):
+    # Transform the query using the vectorizer
+    query_vec = tfidf_vectorizer.transform([query])
+    
+    # Compute cosine similarity between the query and the common questions
+    similarities = cosine_similarity(query_vec, tfidf_matrix).flatten()
+    
+    # Determine if the query is similar to any common question (using a threshold)
+    return max(similarities) >= 0.9

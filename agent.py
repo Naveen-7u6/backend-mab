@@ -12,8 +12,10 @@ from langchain.agents import AgentExecutor
 from pydantic import BaseModel, Field
 import json
 import os
+import ast
 import openai
 from dotenv import load_dotenv, find_dotenv
+from rag import rag_response
 
 load_dotenv(find_dotenv())
 
@@ -26,6 +28,7 @@ else:
 
 backend_data = []
 package_data = []
+rag_data = []
 
 def read_json_objects_from_file(filename):
     with open(filename, 'r') as file:
@@ -53,7 +56,7 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
 
     flights_data = read_json_objects_from_file(file_path)
 
-    flight_data = list()
+    flight_data = []
     i = 1
     for data in flights_data[:4]:
         flight_details = dict()
@@ -78,12 +81,13 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
     return json.dumps(flight_data)
 
 @tool
-def packages_list(places) -> dict:
-    """Provide packages we offer from the places text given."""
-    file_path = f"./available_packages.json"
-    packages_data = read_json_objects_from_file(file_path)
-    package_data.append(packages_data)
-    return places
+def route_rag(query) -> dict:
+    """Route query from the user to the RAG and returns the RAG response back to the user. Required user query"""
+    response = rag_response(query)
+    rag_data.append(response)
+
+    return response
+
 
 @tool
 def book_flight(loc_origin, loc_destination=None, passenger_name=None):
@@ -125,21 +129,44 @@ def book_flight(loc_origin, loc_destination=None, passenger_name=None):
 from langchain_openai import ChatOpenAI
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2)
 
-tools = [get_flight_info, book_flight]
+tools = [get_flight_info, book_flight,route_rag]
 
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.memory import ConversationBufferMemory
 
-memory = ConversationBufferMemory(memory_key="chat_history")
+# memory = ConversationBufferMemory(memory_key="chat_history")
+from langchain.memory import ChatMessageHistory
+memory = ChatMessageHistory(session_id="test-session")
 
 # Define the prompt using SystemMessage and UserMessage
 prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are helpful flight booking assistant who can book and provide details about flight."),
+    ("system", """You are helpful flight booking assistant who can book and provide details about flight. """),
     ("user", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),
 ])
 
+
 llm_with_tool = llm.bind(functions = [format_tool_to_openai_function(t) for t in tools])
+
+
+
+prompt_ques = ChatPromptTemplate.from_messages([
+    ("system", """You are a helpful assistant. Your task is to suggest up atmost three follow-up questions based on the input context given to you. 
+    For example, if the user says i want to visit this [city_name], you need to ask:
+    'Would you like to book a flight to [city_name]?'
+    'What is your preferred travel date and time for your flight to [city_name]?'
+    """),
+    ("user", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+
+format_prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are helpful assistant, who will be provided with you a list of questions, format those questions as list. 
+    The output format list of questions. Strictly follow the output format.
+    Output format: ['question1', 'question2']"""),
+    ("user", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
 
 agent = (
     {
@@ -147,18 +174,62 @@ agent = (
         "agent_scratchpad": lambda x: format_to_openai_function_messages(
             x["intermediate_steps"]
         ),
-        "chat_history": memory.load_memory_variables, 
     } | prompt | llm_with_tool | OpenAIFunctionsAgentOutputParser()
+)
+
+question_agent = (
+    {
+        "input": lambda x: x["input"],
+        "agent_scratchpad": lambda x: format_to_openai_function_messages(
+            x["intermediate_steps"]
+        ),
+    } | prompt_ques | llm | OpenAIFunctionsAgentOutputParser()
+)
+
+formatting_agent = (
+    {
+        "input": lambda x: x["input"],
+        "agent_scratchpad": lambda x: format_to_openai_function_messages(
+            x["intermediate_steps"]
+        ),
+    } | format_prompt | llm | OpenAIFunctionsAgentOutputParser()
 )
 
 agent_executor = AgentExecutor(agent=agent, tools=tools)
 
-def agent_response(query):
+question_executor = AgentExecutor(agent=question_agent, tools=[])
+formatting_executor = AgentExecutor(agent=formatting_agent, tools=[])
 
-    response = agent_executor.invoke({"input":query})
+from langchain_core.runnables.history import RunnableWithMessageHistory
+agent_with_chat_history = RunnableWithMessageHistory(
+    agent_executor,
+    # This is needed because in most real world scenarios, a session id is needed
+    # It isn't really used here because we are using a simple in memory ChatMessageHistory
+    lambda session_id: memory,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+)
+
+def agent_response(query):
+    response = agent_with_chat_history.invoke(
+    {"input": query},
+    config={"configurable": {"session_id": "<foo>"}},)
+
+    if rag_data != []:
+        questions = question_executor.invoke(
+            {"input": rag_data[-1]}
+        )
+        print(questions['output'])
+        formatted_questions = formatting_executor.invoke(
+            {"input": questions['output']}
+        )
+        formatted_questions = ast.literal_eval(str(formatted_questions['output']))
+        print(type(formatted_questions))
     print(backend_data)
+    print(rag_data)
+    
     
     if backend_data != []:
-        return (response, backend_data[-1])
+        return (response,None, backend_data[-1])
     else:
-        return (response['output'], None)
+        return (response['output'],formatted_questions, None)

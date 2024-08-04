@@ -1,6 +1,6 @@
 import openai
 import os
-from check_rag import needs_rag, needs_agent
+from check_rag import is_common_question
 from agent import agent_response
 from rag import rag_response
 
@@ -32,16 +32,17 @@ def general_answer(question):
 
 def get_reponse(prompt):
     import json
-    if needs_rag(prompt):
-            response = rag_response(prompt)
-            return {"response":response}  
-    elif needs_agent(prompt):
-        response, backend_data = agent_response(prompt)
-        if backend_data is None:
-            return {"response":response}
-        else:
-            return {"flightdetails": backend_data}
-    else:
-        memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    # if needs_agent(prompt) or needs_rag(prompt):
+    if is_common_question(prompt):
         response = general_answer(prompt)
         return {"response":response}
+    else:
+        response, questions, backend_data = agent_response(prompt)
+        if backend_data is None:
+            return {"response":response, "questions": questions}
+        else:
+            return {"response": backend_data}
+    # else:
+    #     memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    #     response = general_answer(prompt)
+    #     return {"response":response}
