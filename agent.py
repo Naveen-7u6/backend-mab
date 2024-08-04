@@ -80,12 +80,20 @@ def get_flight_info(loc_origin: str, loc_destination: str) -> dict:
 
     return json.dumps(flight_data)
 
+# @tool
+# def route_rag(query) -> dict:
+#     """Route query from the user to the RAG and returns the RAG response back to the user. Required user query"""
+#     response = rag_response(query)
+#     rag_data.append(response)
+
+#     return response
+
 @tool
-def route_rag(query) -> dict:
-    """Route query from the user to the RAG and returns the RAG response back to the user. Required user query"""
+def execute_tool(query) -> dict:
+    """Execute holidays, plans, suggestion related questions from the user"""
     response = rag_response(query)
     rag_data.append(response)
-
+ 
     return response
 
 
@@ -127,9 +135,9 @@ def book_flight(loc_origin, loc_destination=None, passenger_name=None):
     return json.dumps(booking_info)
 
 from langchain_openai import ChatOpenAI
-llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.2)
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.1)
 
-tools = [get_flight_info, book_flight,route_rag]
+tools = [get_flight_info, book_flight,execute_tool]
 
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.memory import ConversationBufferMemory
@@ -211,6 +219,7 @@ agent_with_chat_history = RunnableWithMessageHistory(
 )
 
 def agent_response(query):
+    formatted_questions = []
     response = agent_with_chat_history.invoke(
     {"input": query},
     config={"configurable": {"session_id": "<foo>"}},)
